@@ -3,6 +3,10 @@ import os
 from pytube import YouTube
 
 
+def download_sets(path):
+    pass
+
+
 def download_set(name):
     yt = YouTube(name)
 

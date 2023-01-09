@@ -6,10 +6,39 @@ import mediapipe as mp
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from pytube import YouTube
 
 landmark_legend = ['x', 'y', 'z', 'visibility']
 
-plt.style.use('seaborn-v0_8')
+plt.style.use('Solarize_Light2')
+
+
+def plot_distance_over_time():
+    yt_link_str = 'https://www.youtube.com/watch?v='
+
+    for res in os.listdir('./Results'):
+        name = 'https://www.youtube.com/watch?v=' + res.removesuffix('.pkl')
+        result_hash = name.split('=')[-1]
+
+        yt = YouTube(name)
+
+        landmark_type = mp.solutions.pose.PoseLandmark.NOSE
+        specific_landmark = get_specific_landmark(result_hash, 'mp4', landmark_type)
+
+        x_width = 0.878 + 2 * 0.329
+        y_width = x_width * 480 / 840
+
+        distance_per_segment = specific_landmark[:-1] - specific_landmark[1:]
+        distance_xy = np.sqrt((x_width * distance_per_segment[:, 0]) ** 2 + (y_width * distance_per_segment[:, 1]) ** 2)
+
+        print(f'Total Distance: {sum(distance_xy):.3f} m')
+        time = np.linspace(0, yt.length, len(distance_xy))
+        plt.plot(time, np.cumsum(distance_xy), label=yt.title)
+
+    plt.xlabel('Time (s)')
+    plt.ylabel('Cumulative Distance (m)')
+    plt.legend()
+    plt.show()
 
 
 def get_specific_landmark(path, path_suffix, pose_landmark: mp.solutions.pose.PoseLandmark):
@@ -19,7 +48,7 @@ def get_specific_landmark(path, path_suffix, pose_landmark: mp.solutions.pose.Po
     return specific_landmark
 
 
-def save_landmark_video(path, path_suffix, frames, frame_iter):
+def save_landmark_video(path, path_suffix, frames):
     mp_pose = mp.solutions.pose
     pose = mp_pose.Pose()
     mp_draw = mp.solutions.drawing_utils
@@ -32,8 +61,12 @@ def save_landmark_video(path, path_suffix, frames, frame_iter):
 
     frame = 0
 
-    while True:
+    while frames > frame:
         success, img = cap.read()
+
+        y, x, z = img.shape
+        x_cut = y * 9 / 16
+        x2, x1 = (x - x_cut) / 2 + x_cut, (x - x_cut) / 2
 
         if success:
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -47,12 +80,16 @@ def save_landmark_video(path, path_suffix, frames, frame_iter):
             for idx, lm in enumerate(results.pose_landmarks.landmark):
                 h, w, c = img.shape
                 cx, cy = int(lm.x * w), int(lm.y * h)
-                cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+                cv2.circle(img, (cx, cy), 2, (255, 0, 0), cv2.FILLED)
+
+            cropped = img[0:y, int(x1):int(x2)]
+
+            img = cv2.resize(cropped, (1080, 1920), cv2.INTER_AREA)
 
             result.write(img)
 
-            frame += frame_iter
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
+            frame += 1
+            # cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
 
             cv2.imshow("Image", img)
 
