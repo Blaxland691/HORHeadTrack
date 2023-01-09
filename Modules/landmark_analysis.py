@@ -12,15 +12,14 @@ landmark_legend = ['x', 'y', 'z', 'visibility']
 yt_link_str = 'https://www.youtube.com/watch?v='
 
 
-def plot_distance_over_time():
+def plot_cumsum(pose_landmark: mp.solutions.pose.PoseLandmark):
     for res in os.listdir('./Results'):
-        name = 'https://www.youtube.com/watch?v=' + res.removesuffix('.pkl')
+        name = yt_link_str + res.removesuffix('.pkl')
         result_hash = name.split('=')[-1]
 
         yt = YouTube(name)
 
-        landmark_type = mp.solutions.pose.PoseLandmark.NOSE
-        specific_landmark = get_specific_landmark(result_hash, 'mp4', landmark_type)
+        specific_landmark = get_specific_landmark(result_hash, 'mp4', pose_landmark)
 
         x_width = 0.878 + 2 * 0.329
         y_width = x_width * 480 / 840
@@ -33,7 +32,7 @@ def plot_distance_over_time():
         plt.plot(time_list, np.cumsum(distance_xy), label=yt.title)
 
     plt.xlabel('Time (s)')
-    plt.ylabel('Cumulative Distance (m)')
+    plt.ylabel(f'Cumulative Distance of {pose_landmark.name} (m)')
     plt.title('HOR Berlin Sets ( Oct 22 - )')
     plt.show()
 
