@@ -13,6 +13,8 @@ yt_link_str = 'https://www.youtube.com/watch?v='
 
 
 def plot_cumsum(pose_landmark: mp.solutions.pose.PoseLandmark):
+    plt.figure(figsize=(4.5, 8))
+
     for res in os.listdir('./Results'):
         name = yt_link_str + res.removesuffix('.pkl')
         result_hash = name.split('=')[-1]
@@ -34,6 +36,8 @@ def plot_cumsum(pose_landmark: mp.solutions.pose.PoseLandmark):
     plt.xlabel('Time (s)')
     plt.ylabel(f'Cumulative Distance of {pose_landmark.name} (m)')
     plt.title('HOR Berlin Sets ( Oct 22 - )')
+    plt.legend(loc='upper center', fontsize=8)
+    plt.tight_layout()
     plt.show()
 
 
