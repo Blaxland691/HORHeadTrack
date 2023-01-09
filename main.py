@@ -26,7 +26,7 @@ def main():
 
     time = np.linspace(0, yt.length, len(distance_xy))
 
-    plt.plot(time, np.cumsum(distance_xy), label=result_hash)
+    plt.plot(time, np.cumsum(distance_xy), label=yt.title)
     plt.xlabel('Time (s)')
     plt.ylabel('Cumulative Distance (m)')
     plt.legend()

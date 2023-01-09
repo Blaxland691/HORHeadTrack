@@ -13,16 +13,63 @@ plt.style.use('seaborn-v0_8')
 
 
 def get_specific_landmark(path, path_suffix, pose_landmark: mp.solutions.pose.PoseLandmark):
-    ld = get_landmarks(path, path_suffix)
+    ld = get_landmarks(path, path_suffix, frame_iter=20)
     specific_landmark = np.array([landmark[pose_landmark] for landmark in ld])
 
     return specific_landmark
 
 
-def get_landmarks(path, path_suffix, calculate_again=False, save_video=False):
+def save_landmark_video(path, path_suffix, frames, frame_iter):
+    mp_pose = mp.solutions.pose
+    pose = mp_pose.Pose()
+    mp_draw = mp.solutions.drawing_utils
+
+    cap = cv2.VideoCapture(f'Videos/{path}.{path_suffix}')
+
+    result = cv2.VideoWriter('swing.avi',
+                             cv2.VideoWriter_fourcc(*'MJPG'),
+                             10, (1080, 1920))
+
+    frame = 0
+
+    while True:
+        success, img = cap.read()
+
+        if success:
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            results = pose.process(img_rgb)
+
+            if results.pose_landmarks:
+                mp_draw.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+            else:
+                break
+
+            for idx, lm in enumerate(results.pose_landmarks.landmark):
+                h, w, c = img.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+
+            result.write(img)
+
+            frame += frame_iter
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
+
+            cv2.imshow("Image", img)
+
+            cv2.waitKey(1)
+        else:
+            break
+
+    result.release()
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def get_landmarks(path, path_suffix, calculate_again=False, save_video=False, frame_iter=1):
     """
     Analyse videos landmarks.
     
+    :param frame_iter:
     :param save_video:
     :param path_suffix:
     :param calculate_again:
@@ -84,7 +131,7 @@ def get_landmarks(path, path_suffix, calculate_again=False, save_video=False):
             if save_video:
                 result.write(img)
 
-            frame += 20
+            frame += frame_iter
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
 
             # cv2.imshow("Image", img)
