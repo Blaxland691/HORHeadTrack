@@ -18,12 +18,6 @@ def get_specific_landmark(path, path_suffix, pose_landmark: mp.solutions.pose.Po
 
     return specific_landmark
 
-    # plt.xlim([0, 1])
-    # plt.ylim([0, 1])
-    # plt.plot(specific_landmark[:, 0], specific_landmark[:, 1])
-    # plt.legend(pose_landmark.name)
-    # plt.show()
-
 
 def get_landmarks(path, path_suffix, calculate_again=False, save_video=False):
     """
