@@ -9,13 +9,10 @@ import numpy as np
 from pytube import YouTube
 
 landmark_legend = ['x', 'y', 'z', 'visibility']
-
-plt.style.use('Solarize_Light2')
+yt_link_str = 'https://www.youtube.com/watch?v='
 
 
 def plot_distance_over_time():
-    yt_link_str = 'https://www.youtube.com/watch?v='
-
     for res in os.listdir('./Results'):
         name = 'https://www.youtube.com/watch?v=' + res.removesuffix('.pkl')
         result_hash = name.split('=')[-1]
@@ -32,12 +29,12 @@ def plot_distance_over_time():
         distance_xy = np.sqrt((x_width * distance_per_segment[:, 0]) ** 2 + (y_width * distance_per_segment[:, 1]) ** 2)
 
         print(f'Total Distance: {sum(distance_xy):.3f} m')
-        time = np.linspace(0, yt.length, len(distance_xy))
-        plt.plot(time, np.cumsum(distance_xy), label=yt.title)
+        time_list = np.linspace(0, yt.length, len(distance_xy))
+        plt.plot(time_list, np.cumsum(distance_xy), label=yt.title)
 
     plt.xlabel('Time (s)')
     plt.ylabel('Cumulative Distance (m)')
-    plt.legend()
+    plt.title('HOR Berlin Sets ( Oct 22 - )')
     plt.show()
 
 
@@ -75,7 +72,7 @@ def save_landmark_video(path, path_suffix, frames):
             if results.pose_landmarks:
                 mp_draw.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
             else:
-                break
+                continue
 
             for idx, lm in enumerate(results.pose_landmarks.landmark):
                 h, w, c = img.shape
@@ -114,7 +111,7 @@ def get_landmarks(path, path_suffix, calculate_again=False, save_video=False, fr
     :return:
     """
 
-    print("Getting Landmarks")
+    print(f"Getting Landmarks for: {path}")
 
     if os.path.exists(f'Results/{path}.pkl') and not calculate_again:
         f = open(f'Results/{path}.pkl', 'rb')
@@ -152,17 +149,15 @@ def get_landmarks(path, path_suffix, calculate_again=False, save_video=False, fr
 
             if results.pose_landmarks:
                 mp_draw.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-            else:
-                break
 
-            landmark = []
-            for idx, lm in enumerate(results.pose_landmarks.landmark):
-                landmark.append([lm.x, 1 - lm.y, lm.z, lm.visibility])
-                h, w, c = img.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+                landmark = []
+                for idx, lm in enumerate(results.pose_landmarks.landmark):
+                    landmark.append([lm.x, 1 - lm.y, lm.z, lm.visibility])
+                    h, w, c = img.shape
+                    cx, cy = int(lm.x * w), int(lm.y * h)
+                    cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
 
-            landmarks.append(landmark)
+                landmarks.append(landmark)
 
             # img = cv2.resize(img, (1080, 1920), cv2.INTER_AREA)
             if save_video:
@@ -171,9 +166,6 @@ def get_landmarks(path, path_suffix, calculate_again=False, save_video=False, fr
             frame += frame_iter
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
 
-            # cv2.imshow("Image", img)
-            #
-            # cv2.waitKey(1)
         else:
             break
 
